@@ -29,4 +29,36 @@ End the log with your plan for what to try next.
   - **Taipei:** Also has a distinct visual identity and does not look interchangeable with the Korean or Japanese cities.
   - **Overall observation:** Each city's photos seem to represent its respective country and location quite accurately. The differences appear to involve a combination of language, vehicles, surroundings, and environmental character, rather than just signage.
 
+## 2026-11-08 baseline (Track A) — Step 2: Baseline training
+- changed: unmodified starter recipe (`track_a/recipe.py`) trained on all 44,257 starter training photos (`seoul`: 11,274, `busan`: 5,191, `tokyo`: 13,347, `osaka`: 7,200, `taipei`: 7,245) for 249,984 photos (3,906 steps of batch size 64) with seeds 0 and 1.
+- why: establish a baseline reference point for evaluating future single-variable experiments and measure how much validation score varies across random seeds alone.
+- validation:
+  - seed 0: `0.5023` (`seoul 0.5639`, `busan 0.3770`, `tokyo 0.6442`, `osaka 0.3534`, `taipei 0.5729`)
+  - seed 1: `0.4907` (`seoul 0.5626`, `busan 0.3842`, `tokyo 0.6068`, `osaka 0.3811`, `taipei 0.5189`)
+  - mean across seeds 0 and 1: `0.4965` (seed-to-seed difference: `0.0116`)
+- per-city performance differences (factual observations):
+  - Cities with more training photos achieve substantially higher validation recall: `tokyo` (`0.6442` / `0.6068`), `seoul` (`0.5639` / `0.5626`), and `taipei` (`0.5729` / `0.5189`).
+  - Cities with fewer training photos in the same country have much lower validation recall: `busan` (`0.3770` / `0.3842`) and `osaka` (`0.3534` / `0.3811`).
+- what it means: The baseline performance is relatively poor, with an average validation score of 0.4965. Tokyo, Seoul, and Taipei perform better than Busan and Osaka. This suggests that the model has difficulty distinguishing cities that share similar visual characteristics, although differences in training-image counts may also contribute.
+
+## 2026-11-09 Step 3: Mistake analysis (`mistakes_baseline_seed0`)
+- generated validation mistake sheets (`results/curate/mistakes_baseline_seed0_<city>_00.png` and `.csv`, 48 highest-confidence errors per city):
+  - `seoul`: 1,063 of 2,435 wrong
+  - `busan`: 866 of 1,390 wrong
+  - `tokyo`: 1,380 of 3,881 wrong
+  - `osaka`: 1,374 of 2,128 wrong
+  - `taipei`: 958 of 2,243 wrong
+- largest confusion patterns in the full validation confusion matrix (`results/baseline_seed0/result.json`):
+  - **Osaka → Tokyo:** 840 of 2,128 Osaka validation images (39.5%) are predicted as Tokyo (compared to 752 predicted correctly as Osaka); 38 of the top 48 Osaka mistakes are predicted as Tokyo.
+  - **Busan → Seoul:** 446 of 1,390 Busan validation images (32.1%) are predicted as Seoul (compared to 524 predicted correctly as Busan); 35 of the top 48 Busan mistakes are predicted as Seoul.
+- recurring visual patterns supported by the mistake sheets and CSV analysis:
+  1. **Shared country-level characteristics:** Architecture, language/signage, and vehicles often look similar between cities in the same country (e.g., Korean police/post office signage and temples in Busan predicted as Seoul; Japanese residential streets and shrines in Osaka predicted as Tokyo).
+  2. **Images with little geographic context:** High-confidence mistakes include close-ups of cars/showrooms, airplanes on airport tarmacs, food plates, and indoor corridors/rooms where street-level city cues are absent.
+  3. **Repeated frames from the same YouTube videos:** Multiple top-48 mistakes per city originate from the same nighttime, rainy, or dashcam walking/driving video sequences (e.g., 10 frames from `youtube_A6PuVf6KcnA` in Tokyo, 10 from `youtube_kCaJ_4NFmJ0` and 8 from `youtube_mCj8vSb6Iow` in Busan, 7 from `youtube_-yRGrGnYB50` in Taipei).
+- student's own summary of two commonalities: Two major commonalities are the similarities between cities within the same country and the lack of useful geographic information in certain images. Korean signage, architecture, and vehicles can appear across both Seoul and Busan, while Japanese visual characteristics are shared between Tokyo and Osaka. Additionally, close-up objects and indoor images often lack recognizable city-specific clues. Repeated frames from the same videos may also contribute disproportionately to the mistakes.
+- hypotheses / potential directions to test next (not yet verified):
+  - **Class-balanced sampling (`sample_weights`):** Test whether drawing each city equally often reduces majority-class attraction (`Osaka → Tokyo` and `Busan → Seoul`).
+  - **Reviewing horizontal flipping (`RandomHorizontalFlip`):** Test whether removing left-right flipping preserves driving-side and script/signage orientation cues.
+  - **Adjusting random crop scale or investigating training-image quality:** Test whether a less aggressive crop scale or curating out non-street/indoor training photos preserves geographic context.
+
 
