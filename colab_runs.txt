@@ -1,3 +1,4 @@
-python src/official.py --tag balanced
+python src/official.py --tag no_flip
+
 
 
