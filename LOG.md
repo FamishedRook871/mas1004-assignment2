@@ -73,6 +73,14 @@ End the log with your plan for what to try next.
     - `taipei`: `0.6188` (before: `0.5729`, `+0.0459`)
   - confusion matrix highlights: `Osaka → Tokyo` errors dropped from 840 to 526 (Osaka correct rose from 752 to 980), and `Busan → Seoul` errors dropped from 446 to 378 (Busan correct rose from 524 to 610).
 - what it means: Busan (`+0.0618`) and Osaka (`+0.1071`) improved substantially, and Taipei (`+0.0459`) also gained, while the previously over-predicted majority classes Seoul (`-0.0670`) and Tokyo (`-0.1240`) declined. Overall macro validation accuracy increased from `0.5023` (seed 0) and `0.4965` (baseline two-seed mean) to `0.5071`, so we retain the `balanced` sampling change. A limitation to note is that `balanced` has only been evaluated on one seed (`seed 0`), and the `+0.0048` gain over baseline seed 0 (`+0.0106` over the baseline mean) is within the `0.0116` seed-to-seed variation observed on the baseline.
+## 2026-11-10 track-b-1: balanced_seed0 ResNet18 (Track B)
+- changed: packaged the verified `results/balanced_seed0/model.onnx` model (`torchvision resnet18 IMAGENET1K_V1` trained at `224x224` with class-balanced sampling for 249,984 photos) into `submission/model.onnx` with `submission/submission.json` (`{"image_size": 224, "starting_weights": "torchvision resnet18 IMAGENET1K_V1", "data": "data/starter/train", "summary": "resnet18 at 224, class-balanced sampling (250k budget)"}`).
+- why: establish a valid, verified Track B submission that meets all Track B model size and compute limits (`<= 12M` parameters, `<= 2.0B` multiply-adds) and already outperforms the unbalanced starter baseline (`0.5023` seed 0 / `0.4965` mean).
+- validation (`check_submission.py` on all 12,077 validation photos):
+  - format and limits: `OK` (`44.7 MB`, `11.17 million` parameters, `1.81 billion` multiply-adds per `224 x 224` photo)
+  - ONNX validation score: `0.507` (`0.5071` in PyTorch; `seoul 0.498`, `busan 0.437`, `tokyo 0.520`, `osaka 0.461`, `taipei 0.619`)
+- what it means: the exported ONNX model passes all Track B grader checks (`format and limits: OK`) and reproduces the `0.507` validation score across all 12,077 validation photos (`long_report/outputs/check_submission.txt`), securing our Track B release (`track-b-1`).
+
 
 
 
