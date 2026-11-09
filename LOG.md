@@ -61,4 +61,18 @@ End the log with your plan for what to try next.
   - **Reviewing horizontal flipping (`RandomHorizontalFlip`):** Test whether removing left-right flipping preserves driving-side and script/signage orientation cues.
   - **Adjusting random crop scale or investigating training-image quality:** Test whether a less aggressive crop scale or curating out non-street/indoor training photos preserves geographic context.
 
+## 2026-11-09 balanced (Track A)
+- changed: in `track_a/recipe.py`, implemented `sample_weights(cities, paths)` using `collections.Counter(cities)` to return `[1.0 / counts[c] for c in cities]`, so all five cities are drawn equally often during training (no other changes).
+- why: the baseline training set has substantial class imbalance (`tokyo` 13,347 and `seoul` 11,274 vs. `busan` 5,191, `osaka` 7,200, and `taipei` 7,245); test whether equal city sampling improves recognition of underrepresented cities, particularly Busan and Osaka.
+- validation: `0.5071` on seed 0 (before: `0.5023` on baseline seed 0; `0.4965` baseline mean across seeds 0 and 1)
+  - per-city validation scores (`balanced` seed 0 vs. `baseline` seed 0):
+    - `seoul`: `0.4969` (before: `0.5639`, `-0.0670`)
+    - `busan`: `0.4388` (before: `0.3770`, `+0.0618`)
+    - `tokyo`: `0.5202` (before: `0.6442`, `-0.1240`)
+    - `osaka`: `0.4605` (before: `0.3534`, `+0.1071`)
+    - `taipei`: `0.6188` (before: `0.5729`, `+0.0459`)
+  - confusion matrix highlights: `Osaka → Tokyo` errors dropped from 840 to 526 (Osaka correct rose from 752 to 980), and `Busan → Seoul` errors dropped from 446 to 378 (Busan correct rose from 524 to 610).
+- what it means: Busan (`+0.0618`) and Osaka (`+0.1071`) improved substantially, and Taipei (`+0.0459`) also gained, while the previously over-predicted majority classes Seoul (`-0.0670`) and Tokyo (`-0.1240`) declined. Overall macro validation accuracy increased from `0.5023` (seed 0) and `0.4965` (baseline two-seed mean) to `0.5071`, so we retain the `balanced` sampling change. A limitation to note is that `balanced` has only been evaluated on one seed (`seed 0`), and the `+0.0048` gain over baseline seed 0 (`+0.0106` over the baseline mean) is within the `0.0116` seed-to-seed variation observed on the baseline.
+
+
 
